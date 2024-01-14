@@ -65,224 +65,6 @@ import sensor, image, utime, time, lcd
 
 # function
 
-def bit_init():
-    import json
-    import machine
-    config = {
-      "type": "bit",
-      "board_info": {
-          'BOOT_KEY': 16,
-          'LED_R': 13,
-          'LED_G': 12,
-          'LED_B': 14,
-          'MIC0_WS': 19,
-          'MIC0_DATA': 20,
-          'MIC0_BCK': 18,
-      }
-    }
-    cfg = json.dumps(config)
-    print(cfg)
-    try:
-        with open('/flash/config.json', 'rb') as f:
-            tmp = json.loads(f.read())
-            print(tmp)
-            if tmp["type"] != config["type"]:
-                raise Exception('config.json no exist')
-    except Exception as e:
-        with open('/flash/config.json', "w") as f:
-            f.write(cfg)
-        machine.reset()
-
-def print_modules_info():
-    help("modules")
-    import sys
-    print("systerm_version:",sys.version_info)
-    print("systerm_platform:",sys.implementation)
-    print("systerm_maxsize:",sys.maxsize)
-    print("systerm_argument:",sys.argv)
-    print(sys.modules.items)
-
-def test_thread():
-    import _thread
-    import time
-
-    def func(name):
-        while 1:
-            print("hello {}".format(name))
-            time.sleep(1)
-
-    _thread.start_new_thread(func,("1",))
-    _thread.start_new_thread(func,("2",))
-
-    del _thread
-
-def print_sys_info():
-    import sys
-    print(sys.implementation.version)
-    try:
-        del sys
-    except:
-        pass
-
-def print_freq_info():
-    from Maix import freq
-    freq.get()
-    try:
-        del freq
-    except:
-        pass
-
-def print_gc_info():
-    #查看内存分配情况
-    import gc
-    import Maix
-    print(gc.mem_free() / 1024) # stack mem
-    print(Maix.utils.heap_free() / 1024) # heap mem
-    try:
-        del gc
-    except:
-        pass
-    try:
-        del Maix
-    except:
-        pass
-
-def test_ujson():
-    import ujson
-    json_str = '''{
-        "name": "sipeed",
-        "babies": [
-            {
-                "name": "maixpy",
-                "birthday": 2.9102,
-                "sex": "unstable"
-            }
-        ]
-    }'''
-    obj = ujson.loads(json_str)
-    print(obj["name"])
-    print(obj["babies"])
-
-    try:
-        del ujson
-    except:
-        pass
-
-def test_IIC():
-    i2c = machine.I2C(machine.I2C.I2C3, freq=100000, scl=28, sda=29) # software i2c
-    devices = i2c.scan()
-    print(devices)
-    for device in devices:
-        i2c.writeto(device, b'123')
-
-def test_PWM():
-    from machine import Timer,PWM
-
-    tim = Timer(Timer.TIMER0, Timer.CHANNEL0, mode=Timer.MODE_PWM)
-    ch = PWM(tim, freq=500000, duty=50, pin=board_info.LED_G)
-    duty=0
-    dir = True
-    while True:
-        if dir:
-            duty += 10
-        else:
-            duty -= 10
-        if duty>100:
-            duty = 100
-            dir = False
-        elif duty<0:
-            duty = 0
-            dir = True
-        time.sleep(0.05)
-        ch.duty(duty)
-
-def standard_main():
-    #manual focus by hands
-    clock.tick()
-    img = sensor.snapshot().lens_corr(1.1).histeq(adaptive=False, clip_limit=1.2)
-    # lens.corr()防止畸变
-    # clip_limit <0为您提供正常的自适应直方图均衡，这可能会导致大量的对比噪音...
-    # clip_limit=1 什么都不做。为获得最佳效果，请略高于1。
-    # 越高，越接近标准自适应直方图均衡，并产生巨大的对比度波动。
-    img.binary([gray_threshold])
-    # 二值化
-    #img.mean(2)
-    #img.morph(kernel_size, kernel)
-    # 在图像的每个像素上运行核
-    #img.gaussian(2)
-    # 高斯滤波
-    img.erode(1)
-    #img.dilate(1)
-    # 对图像边缘进行膨胀，膨胀函数image.dilate(size, threshold=Auto)，size为
-    # kernal的大小，使边缘膨胀。threshold用来设置去除相邻点的个数，threshold数值
-    # 越大，边缘越膨胀；数值越小，边缘膨胀的小。 img.erode(2)
-    #img.bilateral(3, color_sigma=0.1, space_sigma=1)
-    lcd.display(img)
-    lcd_show_fps()
-
-def rgb2lab(rgb):
-    r = rgb[0] / 255.0  # rgb range: 0 ~ 1
-    g = rgb[1] / 255.0
-    b = rgb[2] / 255.0
-
-    # gamma 2.2
-    if r > 0.04045:
-        r = pow((r + 0.055) / 1.055, 2.4)
-    else:
-        r = r / 12.92
-
-    if g > 0.04045:
-        g = pow((g + 0.055) / 1.055, 2.4)
-    else:
-        g = g / 12.92
-
-    if b > 0.04045:
-        b = pow((b + 0.055) / 1.055, 2.4)
-    else:
-        b = b / 12.92
-
-    # sRGB
-    X = r * 0.436052025 + g * 0.385081593 + b * 0.143087414
-    Y = r * 0.222491598 + g * 0.716886060 + b * 0.060621486
-    Z = r * 0.013929122 + g * 0.097097002 + b * 0.714185470
-
-    # XYZ range: 0~100
-    X = X * 100.000
-    Y = Y * 100.000
-    Z = Z * 100.000
-
-    # Reference White Point
-
-    ref_X = 96.4221
-    ref_Y = 100.000
-    ref_Z = 82.5211
-
-    X = X / ref_X
-    Y = Y / ref_Y
-    Z = Z / ref_Z
-
-    # Lab
-    if X > 0.008856:
-        X = pow(X, 1 / 3.000)
-    else:
-        X = (7.787 * X) + (16 / 116.000)
-
-    if Y > 0.008856:
-        Y = pow(Y, 1 / 3.000)
-    else:
-        Y = (7.787 * Y) + (16 / 116.000)
-
-    if Z > 0.008856:
-        Z = pow(Z, 1 / 3.000)
-    else:
-        Z = (7.787 * Z) + (16 / 116.000)
-
-    Lab_L = round((116.000 * Y) - 16.000, 2)
-    Lab_a = round(500.000 * (X - Y), 2)
-    Lab_b = round(200.000 * (Y - Z), 2)
-
-    return Lab_L, Lab_a, Lab_b
-
 def start_flag():
     global LED_B
     LED_B.value(0)
@@ -343,34 +125,18 @@ def find_max_blobs(blobs):
             max_size = blb.pixels()
     return max_blob
 
-def get_barcode():
-    code = img.find_barcodes([0,0,320,240])
-    for i in code:
-        code_text = i.payload()
-        print(code_text)
-
-def get_qrcode():
-    code = img.find_qrcodes([0,0,320,240])
-    for i in code:
-        code_text = i.payload()
-        print(code_text)
-
-def machine_reinit():
-    machine.reset()
-
-
 # INIT
 
 ## WDT
 
 ## SPI
 
-w = b'1234'
-r = bytearray(4)
-spi_1 = machine.SPI(machine.SPI.SPI1, mode=machine.SPI.MODE_MASTER,
-                    baudrate=10000000, polarity=0, phase=0, bits=8,
-                    firstbit=SPI.MSB, sck=28, mosi=29, miso=30, cs0=27)
-spi_1.write(w, cs=machine.SPI.CS0)
+# w = b'1234'
+# r = bytearray(4)
+# spi_1 = machine.SPI(machine.SPI.SPI1, mode=machine.SPI.MODE_MASTER,
+#                     baudrate=10000000, polarity=0, phase=0, bits=8,
+#                     firstbit=SPI.MSB, sck=28, mosi=29, miso=30, cs0=27)
+# spi_1.write(w, cs=machine.SPI.CS0)
 
 
 ## TIM
@@ -573,23 +339,45 @@ while (act==1):
     #manual focus by hands
     #find_circle not good, don't use. find_blobs then use it is also not good.
     clock.tick()
-    img = sensor.snapshot().lens_corr(1.1).histeq(adaptive=False, clip_limit=1.2)
-    # lens.corr()防止畸变
-    # clip_limit <0为您提供正常的自适应直方图均衡，这可能会导致大量的对比噪音...
-    # clip_limit=1 什么都不做。为获得最佳效果，请略高于1。
-    # 越高，越接近标准自适应直方图均衡，并产生巨大的对比度波动。
-    #img.binary([gray_threshold])
-    # 二值化
-    #img.mean(2)
-    #img.morph(kernel_size, kernel)
-    # 在图像的每个像素上运行核
-    #img.gaussian(2)
-    # 高斯滤波
-    #img.erode(1)
-    #img.dilate(1)
-    # 对图像边缘进行膨胀，膨胀函数image.dilate(size, threshold=Auto)，size为
-    # kernal的大小，使边缘膨胀。threshold用来设置去除相邻点的个数，threshold数值
-    # 越大，边缘越膨胀；数值越小，边缘膨胀的小。
-    #img.bilateral(3, color_sigma=0.1, space_sigma=1)
+    img = sensor.snapshot().lens_corr(1.1)# .histeq(adaptive=False, clip_limit=1.2)
+    lines = img.find_lines(threshold=1000, theta_margin = 50, rho_margin = 50)
+
+    for l in lines:#画出所有的直线
+        min_degree = 40
+        max_degree = 155
+        if 0 <= l.theta() <= min_degree or max_degree <= l.theta() <= 180:
+            min_x = 40
+            max_x = 120
+            if min_x <= (l.x1() + l.x2())/2 <= max_x:
+                #img.draw_line(l.line())
+                img.draw_line(l.x1(), l.y1(), l.x2(), l.y2(), thickness = 2)
+
+                data_head = bytearray([0x71,0x3c])
+                if 80-(l.x1() + l.x2())//2 >=0:
+                    data_flag = bytearray([0x00])
+                    LED_R.on()
+                    time.sleep_ms(20)
+                    LED_R.off()
+                if 80-(l.x1() + l.x2())//2 < 0:
+                    data_flag = bytearray([0x01])
+                    LED_G.on()
+                    time.sleep_ms(20)
+                    LED_G.off()
+                data_body = bytearray([(l.y1() + l.y2())//2,(l.x1() + l.x2())//2])
+                data_tail = bytearray([0xaa])
+                data = data_head + data_flag + data_body + data_tail
+                print(data)
+                uart_2.write(data)
+
     lcd.display(img)
     lcd_show_fps()
+
+
+
+
+
+
+
+
+
+
