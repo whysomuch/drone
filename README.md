@@ -24,6 +24,10 @@
 - README.md
   - 整体介绍
 
+## Contributing
+
+Feel free to dive in! [Open an issue](https://github.com/whysomuch/drone/issues/new) or submit PRs.
+
 ## 使用许可
 
 [MIT](LICENSE) © Richard Littauer
