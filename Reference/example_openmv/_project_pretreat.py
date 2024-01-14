@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 # @Time :
 # @Author : Quentin
+# @Email : 798456458@qq.com
 # @File : _project_pretreat.py
 # @Project :_project_pretreat
 
@@ -42,6 +43,7 @@
     deep_learning
     """
 
+https://book.openmv.cc/image/blob.html
 '''
 
 # import
@@ -215,11 +217,12 @@ def led_not_find():
     LED_G.off()
     LED_R.on()
 
-def uart_send_data(uart,string = 0):
-    if type(string) == str:
-        string = int(string)
+def uart_send_data(uart,*args):
+    for element in args:
+        if type(element) == str:
+            element = int(element)
     data_head = bytearray([0x2c,0x15])
-    data_body = bytearray([string])
+    args = bytearray(args)
     data_tail = bytearray([0x1a])
     data = data_head + data_body + data_tail
     uart.write(data)
@@ -266,10 +269,10 @@ def Locking_box(img,b):
 
 def help_cv():
     information =
-    """
+    "
     What we have to do is find patches and shapes in binarized images,
     and be able to recognize colors in RGB images.
-    """
+    "
     print(information)
 
 # INIT
@@ -280,6 +283,22 @@ uart.init(115200, bits=8, parity=None, stop=1)  #8位数据位，无校验位，
 #LED
 LED_R = LED(1)
 LED_G = LED(2)
+
+#TIM
+ac_time = 0
+def tick(timer):
+    global ac_time
+    ac_time = ac_time + 1
+    print(ac_time)
+    if ac_time > 4:
+        ac_time = 0
+        """
+        callback
+        """
+
+    return ac_time
+
+tim = Timer(2, freq=1, callback=tick)
 
 #SENSOR
 try:

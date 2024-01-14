@@ -188,7 +188,8 @@ while (act==1):
     clock.tick()
     img = sensor.snapshot().lens_corr(1.1)#.histeq(adaptive=False, clip_limit=1.2)
 
-    blobs = img.find_blobs([green_threshold], invert=False, merge=True)
+    blobs = img.find_blobs([red_threshold
+    ], invert=False, merge=True)
     blobs = limit_condition(blobs)
     for b in blobs:
         Locking_box(img,b)

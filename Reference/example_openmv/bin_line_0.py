@@ -107,10 +107,10 @@ while(True):
         old = sensor.alloc_extra_fb(16, 16, sensor.GRAYSCALE)
         old.replace(sensor.snapshot().mean_pooled(4,4))
         new_img = sensor.snapshot().mean_pooled(4,4)
-        displacement = old.find_displacement(new_img)
+        the_displacement = old.find_displacement(new_img)
         old_img.replace(new_img)
-        delta_x0 = int(displacement.x_translation() * 5) / 5.0
-        delta_y0 = int(displacement.y_translation() * 5) / 5.0
+        delta_x0 = int(the_displacement.x_translation() * 5) / 5.0
+        delta_y0 = int(the_displacement.y_translation() * 5) / 5.0
         delta_x = 10*delta_x0
         delta_y = 10*delta_y0
         #--------------------------------------检测直线交点的位置---------------------------------------#

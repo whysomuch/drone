@@ -41,9 +41,12 @@ while(True):
     img = sensor.snapshot()
     histogram = img.get_histogram()
     Thresholds = histogram.get_threshold()
-    img.binary([(Thresholds.value(), 255)])
-    img.morph(kernel_size, kernel)
-    img.erode(1, threshold = 2)
-    if Thick_lines_state:
-        img.dilate(1)
+    edge_type = image.EDGE_CANNY
+    """
+    edge_type =
+    image.EDGE_CANNY
+    image.EDGE_SIMPLE
+    """
+    img.find_edges(edge_type, threshold=[Thresholds.value(), 255])
+
 
