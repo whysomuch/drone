@@ -36,6 +36,11 @@ def led_not_find():
     LED_R.value(0)
 
 
+def sign_init():
+    Sign_L.value(0)
+    Sign_L.value(0)
+    Sign_L.value(0)
+
 #INIT
 fm.register(6, fm.fpioa.GPIO6)     #
 fm.register(7, fm.fpioa.GPIO7)
@@ -142,8 +147,6 @@ identity_kernel = (0, 0, 0, \
 #ROI
 center_roi = (80,60,160,120)
 
-
-
 switch_num = 0
 
 rect_w = 72
@@ -160,6 +163,7 @@ clock = time.clock()                # Create a clock object to track the FPS.
 start_flag()
 
 #if __name__ == "__main__":
+num = 0
 act = 1
 while (act == 1):
     clock.tick()
@@ -178,10 +182,18 @@ while (act == 1):
     img.morph(1, sharpen_kernel, boost_ratio)
     blobs = img.find_blobs([blob_threshold_2], x_stride=rect_w, y_stride=rect_h, invert=False, merge=True)
     for b in blobs:
-        ratio = b.w() / b.h()
+        num = num + 1
         img.draw_rectangle(bb[0:4])
-        lcd.display(img)
-        lcd_show_fps()
-
-
-
+    if num==1:
+        Sign_L.value(1)
+        time.sleep_ms(10)
+    elif num==2:
+        Sign_M.value(1)
+        time.sleep_ms(10)
+    else:
+        Sign_M.value(1)
+        time.sleep_ms(10)
+    sign_init()
+    num = 0
+    lcd.display(img)
+    lcd_show_fps()
