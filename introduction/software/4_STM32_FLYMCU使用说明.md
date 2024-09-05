@@ -1,4 +1,4 @@
-# 以FLYMCU软件为讲解内容。
+# 以FLYMCU软件，讲解ISP下载。
 
 - 左键双击 FlyMcu.exe 打开软件。
 
